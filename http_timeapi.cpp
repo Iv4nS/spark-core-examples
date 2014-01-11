@@ -84,15 +84,11 @@ String http_get(char const* hostname, String path) {
  * parse a string of the form "2014-01-11T17:17:59+0200"
  */
 long parseDate(String str) {
-	// make sure it works with UTC
-	setenv("TZ", "UTC", 1);
-	tzset();  // recognize TZ
-	// sy/11.Jan.2014: Not sure if setenv works at all...
-
-	// parse date
+	// TODO: it assumes it is running in UTC. mktime() uses the local time (time zone) for creating timestamp.
+	// parse date. timegm() would be better, but is not available.
 	struct tm time;
 	strptime(str.c_str(), "%Y-%m-%dT%H:%M:%S", &time);
-	return (long) mktime(&time); //timegm should be used, but is not available
+	return (long) mktime(&time);
 }
 
 /**
