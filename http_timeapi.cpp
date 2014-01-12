@@ -3,7 +3,8 @@
 #define DEBUG true
 
 String http_get(const char* hostname, String path);
-long currentTimeMilis();
+long currentTimeEpoche();
+long parseDate(String str);
 
 int led = D7;
 
@@ -24,14 +25,12 @@ void loop() {
 	digitalWrite(led, LOW);    // Turn OFF the LED
 	delay(500);               // Wait for 1 second
 
-	long timestamp = currentTimeMilis();
+	long timestamp = currentTimeEpoche();
 	Serial.print("time: ");
 	Serial.println(timestamp);
 
 	nextTime = millis() + 10000;
 }
-
-
 
 // ------------- HTTP functions --------------
 
@@ -39,7 +38,7 @@ void loop() {
  * make http request and return body
  */
 TCPClient client;
-char buffer[1024];
+char buffer[512];
 String http_get(char const* hostname, String path) {
 
 	if (client.connect(hostname, 80)) {
@@ -72,12 +71,10 @@ String http_get(char const* hostname, String path) {
 	int bodyPos = response.indexOf("\r\n\r\n");
 	if (bodyPos == -1) {
 		Serial.println("can not find http reponse body");
-				return NULL;
+		return NULL;
 	}
-	return response.substring(bodyPos+4);
+	return response.substring(bodyPos + 4);
 }
-
-
 
 // ------------- DATE / TIME functions --------------
 /**
@@ -103,25 +100,24 @@ long parseTzOffset(String str) {
 }
 
 /**
- * returns current time in milisceconds, from a http server.
+ * returns current time since epoche, from a http server.
  */
-long currentTimeMilis() {
+long currentTimeEpoche() {
 	Serial.println("getting current time");
 
-	String response = http_get("www.timeapi.org", "/utc/now");
+	String response = http_get("www.timeapi.org", "/utc/now?\\s");
 	if (response != NULL) {
-		Serial.print("time=");
+		Serial.print("timeapi time=");
 		Serial.println(response);
-		return parseDate(response);
+		return atoi(response.c_str());
 	} else {
 		return 0;
 	}
 }
 
-
 /*timeapi example :
  *
- GET /utc/now HTTP/1.0
+ GET /utc/now?\s HTTP/1.0
  Host: www.timeapi.org
  Connection: close
 
@@ -134,5 +130,5 @@ long currentTimeMilis() {
  X-Frame-Options: sameorigin
  X-Xss-Protection: 1; mode=block
 
- 2014-01-11T11:59:37+00:00
+1389485095
  */
