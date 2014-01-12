@@ -1,36 +1,4 @@
 #include "application.h"
-#include <time.h>
-#define DEBUG true
-
-String http_get(const char* hostname, String path);
-long currentTimeEpoche();
-long parseDate(String str);
-
-int led = D7;
-
-unsigned int nextTime = 0;    // next time to contact the server
-
-void setup() {
-	Serial.begin(9600);
-	pinMode(led, OUTPUT);
-}
-
-void loop() {
-	if (nextTime > millis()) {
-		return;
-	}
-
-	digitalWrite(led, HIGH);   // Turn ON the LED
-	delay(500);               // Wait for 1000mS = 1 second
-	digitalWrite(led, LOW);    // Turn OFF the LED
-	delay(500);               // Wait for 1 second
-
-	long timestamp = currentTimeEpoche();
-	Serial.print("time: ");
-	Serial.println(timestamp);
-
-	nextTime = millis() + 10000;
-}
 
 // ------------- HTTP functions --------------
 
@@ -77,32 +45,11 @@ String http_get(char const* hostname, String path) {
 }
 
 // ------------- DATE / TIME functions --------------
-/**
- * parse a string of the form "2014-01-11T17:17:59+0200"
- */
-long parseDate(String str) {
-	// TODO: it assumes it is running in UTC. mktime() uses the local time (time zone) for creating timestamp.
-	// parse date. timegm() would be better, but is not available.
-	struct tm time;
-	strptime(str.c_str(), "%Y-%m-%dT%H:%M:%S", &time);
-	return (long) mktime(&time);
-}
-
-/**
- * can parse the timezone offset in the string "2014-01-11T17:17:59+0100"
- */
-long parseTzOffset(String str) {
-	// strptime currently does not parse the timezone with %z, so we do it ourself:
-	// parse 3 digits the "+0100" which result in 1 hour.
-	int offsetHours;
-	sscanf(str.c_str(), "%*19s%3d", &offsetHours);
-	return offsetHours * 3600;
-}
 
 /**
  * returns current time since epoche, from a http server.
  */
-long currentTimeEpoche() {
+long currentUnixTimestamp() {
 	Serial.println("getting current time");
 
 	String response = http_get("www.timeapi.org", "/utc/now?\\s");
@@ -132,3 +79,23 @@ long currentTimeEpoche() {
 
 1389485095
  */
+
+
+
+void setup() {
+	Serial.begin(9600);
+}
+
+unsigned int nextTime = 0;    // next time to contact the server
+void loop() {
+	if (nextTime > millis()) {
+		return;
+	}
+
+	long timestamp = currentUnixTimestamp();
+	Serial.print("time: ");
+	Serial.println(timestamp);
+
+	nextTime = millis() + 10000;
+}
+
